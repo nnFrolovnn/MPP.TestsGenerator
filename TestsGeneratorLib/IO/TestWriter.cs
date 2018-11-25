@@ -27,14 +27,14 @@ namespace TestsGeneratorLib.IO
             }
         }
 
-
         public async Task WriteAsync(GeneratedClass result)
         {
-            string path = outputDir + "//" + result.ClassName + ".cs";
-
-            using(StreamWriter writer = new StreamWriter(path))
+            string path = outputDir + "//" + result.Name + ".cs";
+            
+            using (FileStream writer = new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.None))
             {
-                await writer.WriteAsync(result.ToString());
+                byte[] buff = Encoding.ASCII.GetBytes(result.Content);
+                await writer.WriteAsync(buff, 0, buff.Length);
             }
         }
     }

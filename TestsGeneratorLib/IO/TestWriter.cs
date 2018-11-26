@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace TestsGeneratorLib.IO
 {
-    class TestWriter : ITestWriter
+    public class TestWriter : ITestWriter
     {
         private readonly string outputDir;
 
@@ -27,14 +27,18 @@ namespace TestsGeneratorLib.IO
             }
         }
 
-        public async Task WriteAsync(GeneratedClass result)
+        public async Task WriteAsync(Task<List<GeneratedClass>> task)
         {
-            string path = outputDir + "//" + result.Name + ".cs";
+            var result = await task;
+            string path = outputDir + "//" + result[0].Name + ".cs";
             
             using (FileStream writer = new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.None))
             {
-                byte[] buff = Encoding.ASCII.GetBytes(result.Content);
-                await writer.WriteAsync(buff, 0, buff.Length);
+                foreach (GeneratedClass cl in result)
+                {
+                    byte[] buff = Encoding.ASCII.GetBytes(cl.Content);
+                    await writer.WriteAsync(buff, 0, buff.Length);
+                }
             }
         }
     }

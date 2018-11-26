@@ -8,6 +8,6 @@ namespace TestsGeneratorLib.IO
 {
     public interface ITestWriter
     {
-        Task WriteAsync(GeneratedClass result);
+        Task WriteAsync(Task<List<GeneratedClass>> task);
     }
 }

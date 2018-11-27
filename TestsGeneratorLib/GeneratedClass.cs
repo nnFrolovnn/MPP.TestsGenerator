@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TestsGeneratorLib
 {
-    class GeneratedClass
+    public class GeneratedClass
     {
         public string Name { get; }
         public string Content { get; }

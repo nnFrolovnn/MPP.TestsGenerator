@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 
 namespace GeneratorApp
 {
@@ -10,13 +8,15 @@ namespace GeneratorApp
     {
         static void Main(string[] args)
         {
-            TestsGeneratorLib.TestsGenerator generator = new TestsGeneratorLib.TestsGenerator(2, 1, 1, "outTests");
+            TestsGeneratorLib.TestsGenerator generator = new TestsGeneratorLib.TestsGenerator(3, 2, 3, "outTests");
 
             generator.Generate(new List<string>()
             {
-                "1.txt",
-                "2.txt",
-                "3.txt"
+                Path.Combine("in","TestWriter.cs"),
+                Path.Combine("in","TestsGenerator.cs"),
+                Path.Combine("in","TestReader.cs"),
+                Path.Combine("in","Program.cs"),
+                Path.Combine("in","GeneratedClass.cs"),
             }).Wait();
 
             Console.WriteLine("end...");

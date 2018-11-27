@@ -82,19 +82,18 @@ namespace TestsGeneratorLib
                 var methods = cl.DescendantNodes().OfType<MethodDeclarationSyntax>()
                     .Where(x => x.Modifiers.Any(t => t.ValueText == "public"));
 
-
                 string ns = (cl.Parent as NamespaceDeclarationSyntax)?.Name.ToString();
                 if (ns == null)
                 {
                     ns = "Global";
                 }
 
-
                 SyntaxList<MemberDeclarationSyntax> methodsDeclarationList = new SyntaxList<MemberDeclarationSyntax>();
                 foreach (var meth in methods)
                 {
                     string name = meth.Identifier.ToString();
-                    if (methodsDeclarationList.First(x => (x as MethodDeclarationSyntax)?.Identifier == meth.Identifier) != null)
+                    if (methodsDeclarationList.Count != 0 &&
+                        methodsDeclarationList.First(x => (x as MethodDeclarationSyntax)?.Identifier == meth.Identifier) != null)
                     {
                         int i = 1;
                         while (methodsDeclarationList.First(x => (x as MethodDeclarationSyntax)?.Identifier.ToString() == name + "_" + i) != null)
@@ -103,10 +102,26 @@ namespace TestsGeneratorLib
                         }
                         name += "_" + i;
                     }
+                    methodsDeclarationList.Add(PrepareMethodDeclaration(name));
+                }
 
-                    methodsDeclarationList.Add(
-                        MethodDeclaration(
-                            PredefinedType(Token(SyntaxKind.VoidKeyword)), Identifier(name + "_" + "Test"))
+                CompilationUnitSyntax unit = PrepareUnit(usings, cl.Identifier.ValueText + "Test", ns, methodsDeclarationList);
+
+                generatedTestClassesList.Add(
+                    new GeneratedClass(
+                        cl.Identifier.ValueText + "Test",
+                        unit.NormalizeWhitespace().ToFullString())
+                    );
+            }
+
+
+            return generatedTestClassesList;
+        }
+
+        private MethodDeclarationSyntax PrepareMethodDeclaration(string methodName)
+        {
+            return MethodDeclaration(
+                            PredefinedType(Token(SyntaxKind.VoidKeyword)), Identifier(methodName + "_" + "Test"))
                                 .WithAttributeLists(SingletonList(AttributeList(SingletonSeparatedList(
                                     Attribute(IdentifierName("TestMethod"))))))
                                 .WithModifiers(TokenList(Token(SyntaxKind.PublicKeyword)))
@@ -115,25 +130,22 @@ namespace TestsGeneratorLib
                                      IdentifierName("Assert"), IdentifierName("Fail")))
                                 .WithArgumentList(ArgumentList(SingletonSeparatedList(
                                     Argument(LiteralExpression(SyntaxKind.StringLiteralExpression,
-                                    Literal("test"))))))))));
+                                    Literal("test")))))))));
 
-                }
+        }
 
-
-                CompilationUnitSyntax unit = CompilationUnit()
+        private CompilationUnitSyntax PrepareUnit(SyntaxList<UsingDirectiveSyntax> usings, string className, 
+                                                  string ns, SyntaxList<MemberDeclarationSyntax> methodsDeclarationList)
+        {
+            return CompilationUnit()
                     .WithUsings(usings)
                     .WithMembers(SingletonList<MemberDeclarationSyntax>(
                             NamespaceDeclaration(QualifiedName(IdentifierName(ns), IdentifierName("Test")))
-                        .WithMembers(SingletonList<MemberDeclarationSyntax>(
-                                ClassDeclaration(cl.Identifier.ValueText + "Test")
+                        .WithMembers(SingletonList<MemberDeclarationSyntax>(ClassDeclaration(className)
                             .WithAttributeLists(SingletonList(AttributeList(
                                     SingletonSeparatedList(Attribute(IdentifierName("TestClass"))))))
-                                    .WithModifiers(TokenList(Token(SyntaxKind.PublicKeyword)))
+                            .WithModifiers(TokenList(Token(SyntaxKind.PublicKeyword)))
                                 .WithMembers(methodsDeclarationList)))));
-            }
-
-
-            return generatedTestClassesList;
         }
     }
 }

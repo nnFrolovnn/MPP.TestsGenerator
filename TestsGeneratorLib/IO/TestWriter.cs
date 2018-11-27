@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -30,9 +29,9 @@ namespace TestsGeneratorLib.IO
         public async Task WriteAsync(Task<List<GeneratedClass>> task)
         {
             var result = await task;
-            string path = outputDir + "//" + result[0].Name + ".cs";
+            string path = Path.Combine(outputDir, result[0].Name + ".cs");
             
-            using (FileStream writer = new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.None))
+            using (FileStream writer = new FileStream(path, FileMode.Append, FileAccess.Write))
             {
                 foreach (GeneratedClass cl in result)
                 {

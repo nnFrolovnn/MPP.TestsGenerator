@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using TestsGeneratorLib.IO;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+
 namespace TestsGeneratorLib
 {
     public class TestsGenerator
@@ -82,29 +83,13 @@ namespace TestsGeneratorLib
                 var methods = cl.DescendantNodes().OfType<MethodDeclarationSyntax>()
                     .Where(x => x.Modifiers.Any(t => t.ValueText == "public"));
 
+                var methodsDeclarationList = TransformMethodsList(methods);
+
                 string ns = (cl.Parent as NamespaceDeclarationSyntax)?.Name.ToString();
                 if (ns == null)
                 {
                     ns = "Global";
-                }
-
-                List<MemberDeclarationSyntax> methodsDeclarationList = new List<MemberDeclarationSyntax>();
-                foreach (var meth in methods)
-                {
-                    string name = meth.Identifier.ToString();
-                    if (methodsDeclarationList.Count != 0 &&
-                        methodsDeclarationList.Any(x => (x as MethodDeclarationSyntax)?.Identifier == meth.Identifier))
-                    {
-                        int i = 1;
-                        while (methodsDeclarationList.First(x => (x as MethodDeclarationSyntax)?.Identifier.ToString() == name + "_" + i) != null)
-                        {
-                            i++;
-                        }
-                        name += "_" + i;
-                    }
-                    
-                    methodsDeclarationList.Add(PrepareMethodDeclaration(name));
-                }
+                }            
 
                 //save created class with methods in namespace
                 AddToList(ref nsInfoList, new ClassInfo(cl.Identifier.ValueText + "Test", methodsDeclarationList), ns);
@@ -137,26 +122,20 @@ namespace TestsGeneratorLib
                 .WithMembers(List(methodsDeclarationList));
         }
 
-
-        private CompilationUnitSyntax PrepareNamespaceDeclaration(string ns, SyntaxList<UsingDirectiveSyntax> usings, 
-                                                       List<MemberDeclarationSyntax> classes)
+        private CompilationUnitSyntax PrepareNamespaceDeclaration(string ns, List<MemberDeclarationSyntax> classes,
+                                                                  List<UsingDirectiveSyntax> usings = null)
         {
-            return CompilationUnit()
-                    .WithUsings(usings)
+            return (usings != null) ?
+                CompilationUnit()
+                    .WithUsings(List(usings))
+                    .WithMembers(SingletonList<MemberDeclarationSyntax>(
+                            NamespaceDeclaration(QualifiedName(IdentifierName(ns), IdentifierName("Test")))
+                    .WithMembers(List(classes))))
+               : CompilationUnit()
                     .WithMembers(SingletonList<MemberDeclarationSyntax>(
                             NamespaceDeclaration(QualifiedName(IdentifierName(ns), IdentifierName("Test")))
                     .WithMembers(List(classes))));
         }
-
-        private CompilationUnitSyntax PrepareNamespaceDeclaration(string ns,
-                                                       List<MemberDeclarationSyntax> classes)
-        {
-            return CompilationUnit()
-                    .WithMembers(SingletonList<MemberDeclarationSyntax>(
-                            NamespaceDeclaration(QualifiedName(IdentifierName(ns), IdentifierName("Test")))
-                    .WithMembers(List(classes))));
-        }
-
 
         private List<GeneratedNamespaceWithClasses> TransformData(List<NamespaceInfo> nsInfoList, List<UsingDirectiveSyntax> usings)
         {
@@ -177,7 +156,7 @@ namespace TestsGeneratorLib
                     generatedTestNsClassesList.Add(
                         new GeneratedNamespaceWithClasses(
                             nsItem.Name,
-                            PrepareNamespaceDeclaration(nsItem.Name, List(usings), classList).NormalizeWhitespace().ToFullString() + '\n'
+                            PrepareNamespaceDeclaration(nsItem.Name, classList, usings).NormalizeWhitespace().ToFullString() + '\n'
                         ));
                 }
                 else
@@ -211,6 +190,31 @@ namespace TestsGeneratorLib
             {
                 nsInfoList.Add(new NamespaceInfo(ns, clInfo));
             }
+        }
+
+        private List<MemberDeclarationSyntax> TransformMethodsList(IEnumerable<MethodDeclarationSyntax> methods)
+        {
+            List<MemberDeclarationSyntax> methodsDeclarationList = new List<MemberDeclarationSyntax>();
+            foreach (var meth in methods)
+            {
+                string name = meth.Identifier.ToString();
+
+                if (methodsDeclarationList.Count != 0 && methodsDeclarationList.Any(x =>
+                            (x as MethodDeclarationSyntax)?.Identifier.ToString() == meth.Identifier.ToString() + "_Test"))
+                {
+                    int i = 1;
+                    while (methodsDeclarationList.Any(x => (x as MethodDeclarationSyntax)?.Identifier.ToString()
+                                                            == meth.Identifier.ToString() + "_" + i + "_Test"))
+                    {
+                        i++;
+                    }
+                    name += "_" + i;
+                }
+
+                methodsDeclarationList.Add(PrepareMethodDeclaration(name));
+            }
+
+            return methodsDeclarationList;
         }
     }
 }

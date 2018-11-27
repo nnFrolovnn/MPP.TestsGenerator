@@ -8,7 +8,9 @@ namespace GeneratorApp
     {
         static void Main(string[] args)
         {
-            TestsGeneratorLib.TestsGenerator generator = new TestsGeneratorLib.TestsGenerator(1, 1, 1, "outTests");
+            TestsGeneratorLib.TestsGenerator generator = new TestsGeneratorLib.TestsGenerator(3, 2, 1, "outTests");
+
+            Console.WriteLine("Started...");
 
             generator.Generate(new List<string>()
             {
@@ -16,10 +18,11 @@ namespace GeneratorApp
                 Path.Combine("in","TestReader.cs"),
                 Path.Combine("in","Program.cs"),
                 Path.Combine("in","GeneratedClass.cs"),
-                Path.Combine("in","TestsGenerator.cs")
+                Path.Combine("in","TestsGenerator.cs"),
+                Path.Combine("in","TestClasses.cs")
             }).Wait();
 
-            Console.WriteLine("end...");
+            Console.WriteLine("Completed...");
             Console.ReadKey();
         }
     }

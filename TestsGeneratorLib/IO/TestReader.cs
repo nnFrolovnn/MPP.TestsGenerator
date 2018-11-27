@@ -14,22 +14,16 @@ namespace TestsGeneratorLib.IO
         {
             if (path != null)
             {
-                return RR(path);
-
+                Thread.Sleep(10000);
+                using (StreamReader reader = new StreamReader(path))
+                {
+                    return await reader.ReadToEndAsync();
+                }
             }
             else
             {
                 throw new ArgumentNullException(nameof(path));
             }
-        }
-
-        public string RR(string path)
-        {
-            Thread.Sleep(10000);
-            using (StreamReader reader = new StreamReader(path))
-            {
-                return reader.ReadToEnd();
-            }
-        }
+        }     
     }
 }

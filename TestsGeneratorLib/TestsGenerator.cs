@@ -1,11 +1,13 @@
-﻿using System;
+﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using TestsGeneratorLib.IO;
-
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 namespace TestsGeneratorLib
 {
     public class TestsGenerator
@@ -25,7 +27,7 @@ namespace TestsGeneratorLib
             reader = new TestReader();
         }
 
-        public TestsGenerator(int maxReadersCount, int maxGeneratorsCount, 
+        public TestsGenerator(int maxReadersCount, int maxGeneratorsCount,
                               int maxWritersCount, ITestWriter writer, ITestReader reader)
         {
             this.maxGeneratorsCount = maxGeneratorsCount;
@@ -46,7 +48,7 @@ namespace TestsGeneratorLib
                 new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = maxGeneratorsCount });
 
             var writerBlock = new ActionBlock<Task<List<GeneratedClass>>>(
-                new Action<Task<List<GeneratedClass>>>((x)=>writer.WriteAsync(x).Wait()),
+                new Action<Task<List<GeneratedClass>>>((x) => writer.WriteAsync(x).Wait()),
                 new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = maxWritersCount });
 
             var options = new DataflowLinkOptions { PropagateCompletion = true };
@@ -66,9 +68,72 @@ namespace TestsGeneratorLib
 
         private async Task<List<GeneratedClass>> GenerateTestFileAsync(Task<string> readSourceFile)
         {
-            var s = await readSourceFile;
-            return new List<GeneratedClass>() { new GeneratedClass(s + "1", "int q"), new GeneratedClass(s + "2", "int t") };
-        }
+            string readedCode = await readSourceFile;
+            CompilationUnitSyntax compilationUnitSyntax = ParseCompilationUnit(readedCode);
 
+            List<GeneratedClass> generatedTestClassesList = new List<GeneratedClass>();
+
+            var classes = compilationUnitSyntax.DescendantNodes().OfType<ClassDeclarationSyntax>();
+            var usings = List<UsingDirectiveSyntax>();
+            usings.Add(UsingDirective(QualifiedName(IdentifierName("Microsoft.VisualStudio"), IdentifierName("TestTools.UnitTesting"))));
+
+            foreach (var cl in classes)
+            {
+                var methods = cl.DescendantNodes().OfType<MethodDeclarationSyntax>()
+                    .Where(x => x.Modifiers.Any(t => t.ValueText == "public"));
+
+
+                string ns = (cl.Parent as NamespaceDeclarationSyntax)?.Name.ToString();
+                if (ns == null)
+                {
+                    ns = "Global";
+                }
+
+
+                SyntaxList<MemberDeclarationSyntax> methodsDeclarationList = new SyntaxList<MemberDeclarationSyntax>();
+                foreach (var meth in methods)
+                {
+                    string name = meth.Identifier.ToString();
+                    if (methodsDeclarationList.First(x => (x as MethodDeclarationSyntax)?.Identifier == meth.Identifier) != null)
+                    {
+                        int i = 1;
+                        while (methodsDeclarationList.First(x => (x as MethodDeclarationSyntax)?.Identifier.ToString() == name + "_" + i) != null)
+                        {
+                            i++;
+                        }
+                        name += "_" + i;
+                    }
+
+                    methodsDeclarationList.Add(
+                        MethodDeclaration(
+                            PredefinedType(Token(SyntaxKind.VoidKeyword)), Identifier(name + "_" + "Test"))
+                                .WithAttributeLists(SingletonList(AttributeList(SingletonSeparatedList(
+                                    Attribute(IdentifierName("TestMethod"))))))
+                                .WithModifiers(TokenList(Token(SyntaxKind.PublicKeyword)))
+                                .WithBody(Block(ExpressionStatement(InvocationExpression(
+                                     MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
+                                     IdentifierName("Assert"), IdentifierName("Fail")))
+                                .WithArgumentList(ArgumentList(SingletonSeparatedList(
+                                    Argument(LiteralExpression(SyntaxKind.StringLiteralExpression,
+                                    Literal("test"))))))))));
+
+                }
+
+
+                CompilationUnitSyntax unit = CompilationUnit()
+                    .WithUsings(usings)
+                    .WithMembers(SingletonList<MemberDeclarationSyntax>(
+                            NamespaceDeclaration(QualifiedName(IdentifierName(ns), IdentifierName("Test")))
+                        .WithMembers(SingletonList<MemberDeclarationSyntax>(
+                                ClassDeclaration(cl.Identifier.ValueText + "Test")
+                            .WithAttributeLists(SingletonList(AttributeList(
+                                    SingletonSeparatedList(Attribute(IdentifierName("TestClass"))))))
+                                    .WithModifiers(TokenList(Token(SyntaxKind.PublicKeyword)))
+                                .WithMembers(methodsDeclarationList)))));
+            }
+
+
+            return generatedTestClassesList;
+        }
     }
 }

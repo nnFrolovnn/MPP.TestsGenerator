@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace TestsGeneratorLib
 {
-    public class GeneratedClass
+    public class GeneratedNamespaceWithClasses
     {
         public string Name { get; }
         public string Content { get; }
 
-        public GeneratedClass(string cName, string cContent)
+        public GeneratedNamespaceWithClasses(string cName, string cContent)
         {
             Name = cName;
             Content = cContent;

@@ -71,6 +71,7 @@ namespace TestsGeneratorLib
         {
             string readedCode = await readSourceFile;
             CompilationUnitSyntax compilationUnitSyntax = ParseCompilationUnit(readedCode);
+
             var classes = compilationUnitSyntax.DescendantNodes().OfType<ClassDeclarationSyntax>();
             List<UsingDirectiveSyntax> usings = new List<UsingDirectiveSyntax>
             {

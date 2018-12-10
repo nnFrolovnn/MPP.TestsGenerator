@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using TestsGeneratorLib.IO;
 
 namespace GeneratorApp
 {
@@ -8,7 +9,9 @@ namespace GeneratorApp
     {
         static void Main(string[] args)
         {
-            TestsGeneratorLib.TestsGenerator generator = new TestsGeneratorLib.TestsGenerator(3, 2, 1, "outTests");
+            TestWriterSingle writer = new TestWriterSingle("outTests");
+            TestReader reader = new TestReader();
+            TestsGeneratorLib.TestsGenerator generator = new TestsGeneratorLib.TestsGenerator(1, 1, 1, writer, reader);
 
             Console.WriteLine("Started...");
 

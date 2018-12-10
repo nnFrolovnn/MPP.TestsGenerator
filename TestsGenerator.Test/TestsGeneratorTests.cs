@@ -1,13 +1,8 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TestsGeneratorLib.IO;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 using System.IO;
 
@@ -24,7 +19,7 @@ namespace TestsGeneratorLib.Test
 
         CompilationUnitSyntax generatedUnit;
 
-        [TestInitialize]
+        [ClassInitialize]
         public void Init()
         {
             outputDirectory = Path.Combine("..", "..", "TestDirectoryOutput");

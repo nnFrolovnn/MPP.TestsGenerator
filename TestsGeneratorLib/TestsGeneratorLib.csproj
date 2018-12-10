@@ -131,13 +131,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ClassInfo.cs" />
-    <Compile Include="GeneratedNamespaceWithClasses.cs" />
+    <Compile Include="GeneratedClass.cs" />
     <Compile Include="IO\ITestReader.cs" />
     <Compile Include="IO\ITestWriter.cs" />
     <Compile Include="IO\TestReader.cs" />
     <Compile Include="IO\TestWriter.cs" />
-    <Compile Include="NamespaceInfo.cs" />
+    <Compile Include="IO\TestWriterSingle.cs" />
     <Compile Include="TestsGenerator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -26,14 +26,13 @@ namespace TestsGeneratorLib.IO
             }
         }
 
-        public async Task WriteAsync(Task<List<GeneratedNamespaceWithClasses>> task)
+        public async Task WriteAsync(List<GeneratedClass> result)
         {
-            var result = await task;
             string path = Path.Combine(outputDir, result[0].Name + ".cs");
             
             using (FileStream writer = new FileStream(path, FileMode.Create, FileAccess.Write))
             {
-                foreach (GeneratedNamespaceWithClasses cl in result)
+                foreach (GeneratedClass cl in result)
                 {
                     byte[] buff = Encoding.ASCII.GetBytes(cl.Content);
                     await writer.WriteAsync(buff, 0, buff.Length);
